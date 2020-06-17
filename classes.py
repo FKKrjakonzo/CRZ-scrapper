@@ -3,43 +3,82 @@
 from datetime import datetime
 from sys import argv
 from os import path
-
+import xlsxwriter
 
 class search_obj:
 
-    def __init__(self, cena):
+    def __init__(self, cena, cesta, csv):
+        self.csv = csv
         self.counter = 0
         self.copies = 0
         self.cena_od = cena[0]
         self.cena_do = cena[1]
-        self.file_set('{}.csv'.format(datetime.now().strftime('%d_%m_%Y_%H'
+        if(self.csv):
+            self.file_set('{}{}.csv'.format(cesta, datetime.now().strftime('%d_%m_%Y_%H'
+                      )))
+        else:
+            self.file_set('{}{}.xlsx'.format(cesta, datetime.now().strftime('%d_%m_%Y_%H'
                       )))
 
     def file_set(self, file):
-
-        # self.file = "{}.csv".format(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))
-
         self.file = file
         if not path.exists('{}\\{}'.format(path.dirname(argv[0]),
-                           self.file)):
-            f = open(self.file, 'a', encoding='utf_8_sig')
-            f.write('\xc4\x8c\xc3\xadslo zmluvy;CRZ ID;Objedn\xc3\xa1vate\xc4\xbe;Adresa objedn\xc3\xa1vate\xc4\xbea;I\xc4\x8cO objedn\xc3\xa1vate\xc4\xbea;Dod\xc3\xa1vate\xc4\xbe;Adresa dod\xc3\xa1vate\xc4\xbea;I\xc4\x8cO dod\xc3\xa1vate\xc4\xbea;N\xc3\xa1zov zmluvy;D\xc3\xa1tum zverejnenia;D\xc3\xa1tum uzavretia;D\xc3\xa1tum \xc3\xba\xc4\x8dinnosti;D\xc3\xa1tum platnosti do;Zmluvne dohodnut\xc3\xa1 \xc4\x8diastka;Celkov\xc3\xa1 \xc4\x8diastka;'
-                    )
-            f.write('\n')
-            f.close()
+                               self.file)):
+            if(self.csv):
+                f = open(self.file, 'a', encoding='utf_8_sig')
+                f.write('Číslo zmluvy;CRZ ID;Objednávateľ;Adresa objednávateľa;IČO objednávateľa;Dodávateľ;Adresa dodávateľa;IČO dodávateľa;Názov zmluvy;Dátum zverejnenia;Dátum uzavretia;Dátum účinnosti;Dátum platnosti do;Zmluvne dohodnutá čiastka;Celková čiastka;'
+                            )
+                f.write('\n')
+                f.close()
+            else:
+                self.workbook =xlsxwriter.Workbook(self.file)
+                self.worksheet = self.workbook.add_worksheet()
+                self.worksheet.write(0, 1, 'Číslo zmluvy')
+                self.worksheet.write(0, 2, 'CRZ ID')
+                self.worksheet.write(0, 3, 'Objednávateľ')
+                self.worksheet.write(0, 4, 'Adresa objednávateľa')
+                self.worksheet.write(0, 5, 'IČO objednávateľa')
+                self.worksheet.write(0, 6, 'Dodávateľ')
+                self.worksheet.write(0, 1, 'Adresa dodávateľa')
+                self.worksheet.write(0, 2, 'IČO dodávateľa')
+                self.worksheet.write(0, 3, 'Názov zmluvy')
+                self.worksheet.write(0, 4, 'Adresa objednávateľa')
+                self.worksheet.write(0, 5, 'Dátum zverejnenia')
+                self.worksheet.write(0, 6, 'Dátum uzavretia')
+                self.worksheet.write(0, 6, 'Dátum účinnosti')
+                self.worksheet.write(0, 6, 'Dátum platnosti do')
+                self.worksheet.write(0, 6, 'Zmluvne dohodnutá čiastka')
+                self.worksheet.write(0, 6, 'Celková čiastka')
+                self.row = 1
+        else:
+            if not self.csv:
+                self.file_set('{}'.format('{}_{}.xlsx'.format(self.file[:-4],
+                              self.copies)))
 
     def insert_obj(self, line):
         self.counter += 1
         if self.counter >= 200000:
-            self.file_set('{}'.format('{}_{}.csv'.format(self.file[:-4],
-                          self.copies)))
-            self.copies += 1
-            self.counter = 0
-
-        with open(self.file, 'a', encoding='utf_8_sig') as f:
-            for i in line:
-                f.write('{};'.format(i))
-            f.write('\n')
+            if(self.csv):
+                self.file_set('{}'.format('{}_{}.csv'.format(self.file[:-4],
+                              self.copies)))
+            else:
+                self.file_set('{}'.format('{}_{}.xlsx'.format(self.file[:-4],
+                              self.copies)))
+                self.copies += 1
+                self.counter = 0
+                self.row = 0
+                self.close()
+        if(self.csv):
+            with open(self.file, 'a', encoding='utf_8_sig') as f:
+                for i in line:
+                    f.write('{};'.format(i))
+                f.write('\n')
+        else:
+            for i in range(len(line)):
+                self.worksheet.write(self.row, i, line[i])  
+            self.row += 1
+    def close(self):
+        self.workbook.close()
 
     def filter_lines(self, line):
         if self.cena_od:

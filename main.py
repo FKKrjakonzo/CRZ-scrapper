@@ -6,14 +6,14 @@ from urllib.request import urlopen
 from untangle import parse
 from classes import search_obj
 from datetime import datetime, timedelta
-from tkinter import Button, Label, Entry, Tk, HORIZONTAL, W, messagebox
+from tkinter import Button, Label, Entry, Tk, HORIZONTAL, W, messagebox, filedialog, IntVar, Radiobutton
 from tkcalendar import DateEntry
 from tkinter.ttk import Progressbar
 from time import sleep, time
 
 root = Tk()
-root.geometry('300x200')
-root.title('Bo\xc5\xbesk\xc3\xbd CRZ scrapper')
+root.geometry('280x250')
+root.title('Božský CRZ scrapper')
 now = datetime.now()
 ready = True
 
@@ -41,8 +41,8 @@ cal1 = DateEntry(
     )
 cal1.place(x=70, y=40)
 
-label_1 = Label(root, text='D\xc3\xa1tum od:').place(x=0, y=10)
-label_2 = Label(root, text='D\xc3\xa1tum do:').place(x=0, y=40)
+label_1 = Label(root, text='Dátum od:').place(x=0, y=10)
+label_2 = Label(root, text='Dátum do:').place(x=0, y=40)
 label_3 = Label(root, text='Cena od: ').place(x=0, y=70)
 label_4 = Label(root, text='Cena do: ').place(x=0, y=100)
 
@@ -68,7 +68,7 @@ def bar():
 
     if date_do < date_od:
         messagebox.showerror('showerror',
-                             'D\xc3\xa1tum od je v\xc3\xa4\xc4\x8d\xc5\xa1\xc3\xad jak do.'
+                             'Dátum od je väčší ako do.'
                              )
         return 0
 
@@ -79,7 +79,7 @@ def bar():
             value = float(e1.get())
         except ValueError:
             messagebox.showerror('showerror',
-                                 'Cena od nie je \xc4\x8d\xc3\xadslo, je potrebn\xc3\xa9 odde\xc4\xbeova\xc5\xa5 desatinne hodnoty s .'
+                                 'Cena od nie je číslo, je potrebné oddeľovať hodnoty s .'
                                  )
             return 0
     try:
@@ -89,11 +89,18 @@ def bar():
             value1 = float(e2.get())
         except ValueError:
             messagebox.showerror('showerror',
-                                 'Cena do nie je \xc4\x8d\xc3\xadslo, je potrebn\xc3\xa9 odde\xc4\xbeova\xc5\xa5 desatinne hodnoty s .'
+                                 'Cena do nie je číslo, je potrebné oddeľovať hodnoty s .'
                                  )
             return 0
-    Objekt = search_obj([value, value1])
-    progress.place(x=5, y=130)
+    if(v.get() == 1):
+        csv = True
+    else:
+        csv = False
+    if(button_1["text"] != "Vlastná cesta"):
+        Objekt = search_obj([value, value1], "{}\\".format(button_1["text"]), csv)
+    else:
+        Objekt = search_obj([value, value1], "", csv)
+    progress.place(x=5, y=170)
     steps = (date_do - date_od).days
     done = 0
 
@@ -130,8 +137,20 @@ def bar():
         if time() - start_time < 3:
             sleep(2)
     progress['value'] = 100
+    Objekt.close()
 
+def pick_path():
+    folder_selected = filedialog.askdirectory()
+    if(folder_selected):
+        button_1["text"] = folder_selected
 
-button = Button(root, text='\xc5\xa0tart', command=bar).place(x=80,
-        y=160)
+v = IntVar() 
+Radiobutton(root, text="CSV", variable=v, value=1).place(x=180, y=10)
+Radiobutton(root, text="XLSX", variable=v, value=2).place(x=180, y=30)
+v.set(1)
+button_1 = Button(root, text="Vlastná cesta", command=pick_path)
+button_1.place(x=5, y=130)
+
+button = Button(root, text='Štart', command=bar).place(x=80,
+        y=210)
 root.mainloop()
